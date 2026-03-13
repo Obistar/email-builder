@@ -1,0 +1,80 @@
+diff --git a/es/Trigger/index.js b/es/Trigger/index.js
+index dfe146d2d1d96be89fc9b90f098dfc6ad6e23d71..e150254b19d0f3d090a060cb9e7fa652b21804fa 100644
+--- a/es/Trigger/index.js
++++ b/es/Trigger/index.js
+@@ -918,7 +918,7 @@ var Trigger = /** @class */ (function (_super) {
+                 React.createElement("span", __assign({ ref: this.triggerRef, "trigger-placement": this.realPosition, style: __assign(__assign(__assign({ width: autoAlignPopupWidth && (style === null || style === void 0 ? void 0 : style.width) === undefined
+                             ? (_d = this.childrenDomSize) === null || _d === void 0 ? void 0 : _d.width
+                             : '' }, popupStyle), { position: 'absolute', zIndex: zIndex || '' }), style) }, popupEventProps, { className: popupClassName }, pickDataAttributes(this.props)),
+-                    React.createElement(popupChildren.type, __assign({ ref: popupChildren.ref }, popupChildren.props, { style: __assign(__assign({}, popupChildren.props.style), dropdownPopupStyle) })),
++                    React.createElement(popupChildren.type, __assign({ ref: popupChildren.props.ref }, popupChildren.props, { style: __assign(__assign({}, popupChildren.props.style), dropdownPopupStyle) })),
+                     (showArrow || arrowProps) && (React.createElement("div", { className: cs(prefixCls + "-arrow-container", (_b = {},
+                             _b[childrenPrefix + "-arrow-container"] = childrenPrefix,
+                             _b)) },
+diff --git a/es/Trigger/portal.js b/es/Trigger/portal.js
+index 30df60f66e3e0ce77bfdcc3812adae334da04b32..71cd03456ccf0f8cfcd305417ebd38bb4b841977 100644
+--- a/es/Trigger/portal.js
++++ b/es/Trigger/portal.js
+@@ -1,16 +1,19 @@
+-// only used by trigger. Plan to replace ../Portal
++// React 19 compat: fixed Portal for strict mode double-mount
+ import { useRef, useEffect } from 'react';
+ import ReactDOM from 'react-dom';
+ import { isServerRendering } from '../_util/dom';
+-import useIsFirstRender from '../_util/hooks/useIsFirstRender';
+ var Portal = function (props) {
+     var getContainer = props.getContainer, children = props.children;
+     var containerRef = useRef();
+-    var isFirstRender = useIsFirstRender();
+-    if ((isFirstRender || containerRef.current === null) && !isServerRendering) {
++    // React 19 strict mode: always ensure container exists and is attached to DOM
++    if (!isServerRendering && (!containerRef.current || !containerRef.current.parentNode)) {
+         containerRef.current = getContainer();
+     }
+     useEffect(function () {
++        // Re-attach container if cleanup removed it (strict mode double-mount)
++        if (containerRef.current && !containerRef.current.parentNode) {
++            containerRef.current = getContainer();
++        }
+         return function () {
+             var container = containerRef.current;
+             if (container && container.parentNode) {
+diff --git a/es/_util/hooks/useMergeValue.js b/es/_util/hooks/useMergeValue.js
+index 1b6e22da9bb809b35b1bf7715e77078d790a9cf8..0680ad3c6c06eadf88ef95b8fd8e58b9822bf142 100644
+--- a/es/_util/hooks/useMergeValue.js
++++ b/es/_util/hooks/useMergeValue.js
+@@ -36,7 +36,7 @@ export default function useMergeValue(defaultStateValue, props) {
+          *  react18 严格模式下 useEffect 执行两次，可能出现 defaultValue 不生效的问题。
+          */
+         if (value === undefined && prevPropsValue !== value) {
+-            setStateValue(value);
++            // React 19: skip setting state to undefined — causes issues with __read destructuring
+         }
+     }, [value]);
+     var mergedValue = isUndefined(value) ? stateValue : value;
+diff --git a/es/_util/react-dom.js b/es/_util/react-dom.js
+index 8155d849d04f167f1ba559884aa9b474def1fe73..5f01228a66e541c1e8464c7f82da426fecd618e8 100644
+--- a/es/_util/react-dom.js
++++ b/es/_util/react-dom.js
+@@ -93,14 +93,14 @@ export var findDOMNode = function (element, instance) {
+     }
+     return null;
+ };
+-// 回调children的原始 ref ，适配函数 ref or ref.current 场景
++// React 19: ref is a regular prop, not accessible via element.ref
+ export var callbackOriginRef = function (children, node) {
+-    if (children && children.ref) {
+-        if (isFunction(children.ref)) {
+-            children === null || children === void 0 ? void 0 : children.ref(node);
+-        }
+-        if ('current' in children.ref) {
+-            children.ref.current = node;
++    var ref = children && children.props && children.props.ref;
++    if (ref) {
++        if (isFunction(ref)) {
++            ref(node);
++        } else if ('current' in ref) {
++            ref.current = node;
+         }
+     }
+ };

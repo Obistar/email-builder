@@ -1,32 +1,43 @@
-import React from 'react';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/theme/material.css';
-import 'codemirror/theme/neat.css';
-import 'codemirror/mode/xml/xml.js';
-import { Controlled as CodeMirror } from 'react-codemirror2';
+import React, { useCallback, useRef } from 'react';
+import CodeMirror, { ReactCodeMirrorRef } from '@uiw/react-codemirror';
+import { html } from '@codemirror/lang-html';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { EditorView } from '@codemirror/view';
 
-import styles from './index.module.scss';
+const extensions = [html(), EditorView.lineWrapping];
 
 export default function CodemirrorEditor(props: {
   value: string;
   onChange(val: string): void;
 }) {
   const { value, onChange } = props;
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
+
+  const handleChange = useCallback(
+    (val: string) => {
+      onChange(val);
+    },
+    [onChange],
+  );
+
   return (
-    <CodeMirror
-      className={styles.container}
-      value={value}
-      onBeforeChange={(editor, data, value) => onChange(value)}
-      options={{
-        mode: 'xml',
-        theme: 'material',
-        lineNumbers: true,
-        autofocus: true,
-        styleActiveLine: true,
-        smartIndent: true,
-        lineWrapping: true,
-        foldGutter: true,
-      }}
-    />
+    <div style={{ height: '100%', overflow: 'auto' }}>
+      <CodeMirror
+        ref={editorRef}
+        value={value}
+        onChange={handleChange}
+        extensions={extensions}
+        theme={oneDark}
+        height="100%"
+        style={{ height: '100%' }}
+        basicSetup={{
+          lineNumbers: true,
+          highlightActiveLine: true,
+          foldGutter: true,
+          autocompletion: true,
+          indentOnInput: true,
+        }}
+      />
+    </div>
   );
 }

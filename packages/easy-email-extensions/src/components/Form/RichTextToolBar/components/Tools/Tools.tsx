@@ -21,6 +21,7 @@ import { StrikeThrough } from '../StrikeThrough';
 import { Underline } from '../Underline';
 import { Italic } from '../Italic';
 import { Bold } from '../Bold';
+import { Heading } from '../Heading';
 import { FontSize } from '../FontSize';
 import { RICH_TEXT_TOOL_BAR } from '@extensions/constants';
 
@@ -120,6 +121,7 @@ export function Tools(props: ToolsProps) {
     AvailableTools.MergeTags,
     AvailableTools.FontFamily,
     AvailableTools.FontSize,
+    AvailableTools.Heading,
     AvailableTools.Bold,
     AvailableTools.Italic,
     AvailableTools.StrikeThrough,
@@ -155,6 +157,14 @@ export function Tools(props: ToolsProps) {
       case AvailableTools.FontSize:
         return [
           <FontSize
+            key={tool}
+            execCommand={execCommand}
+            getPopupContainer={getPopoverMountNode}
+          />,
+        ];
+      case AvailableTools.Heading:
+        return [
+          <Heading
             key={tool}
             execCommand={execCommand}
             getPopupContainer={getPopoverMountNode}
@@ -224,7 +234,7 @@ export function Tools(props: ToolsProps) {
             onChange={() => execCommand('')}
           />,
         ];
-      case 'justify':
+      case AvailableTools.Justify:
         return [
           <ToolItem
             key={`${tool}-justify-left`}

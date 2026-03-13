@@ -33,16 +33,13 @@ export default defineConfig({
     },
     rollupOptions: {
       plugins: [],
-      external: [
-        'react',
-        'react-dom',
-        'react-dom/server',
-        'mjml-browser',
-        'react-final-form',
-        'easy-email-core',
-        'easy-email-editor',
-        'uuid',
-      ],
+      external: (id) => {
+        // Externalize react, react-dom and all sub-paths (e.g. react/jsx-runtime)
+        if (/^react($|\/)/.test(id)) return true;
+        if (/^react-dom($|\/)/.test(id)) return true;
+        if (['mjml-browser', 'react-final-form', 'easy-email-core', 'easy-email-editor', 'uuid'].includes(id)) return true;
+        return false;
+      },
       output: {},
     },
     outDir: 'lib',

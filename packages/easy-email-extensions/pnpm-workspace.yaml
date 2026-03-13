@@ -1,0 +1,2 @@
+patchedDependencies:
+  '@arco-design/web-react': patches/@arco-design__web-react.patch

@@ -1,5 +1,10 @@
-// React 19 compatibility shim — MUST be first import
-import './react19-compat';
+// React 19 removed findDOMNode — provide a no-op fallback for bundled
+// react-transition-group (used internally by Arco Design) when nodeRef
+// isn't available. Arco's own findDOMNode wrapper already has guards.
+import ReactDOM from 'react-dom';
+if (!(ReactDOM as any).findDOMNode) {
+  (ReactDOM as any).findDOMNode = () => null;
+}
 
 import './index.scss';
 

@@ -29,6 +29,7 @@ export enum AvailableTools {
   Lists = 'lists',
   HorizontalRule = 'horizontalRule',
   RemoveFormat = 'removeFormat',
+  Heading = 'heading',
 }
 
 export interface PropsProviderProps {

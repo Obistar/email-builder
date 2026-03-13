@@ -18,13 +18,16 @@ export const HtmlEditor: React.FC<{
   const { focusBlock, setValueByIdx } = useBlock();
   const { pageData } = useEditorContext();
   const { focusIdx } = useFocusIdx();
-  const [content, setContent] = useState(focusBlock?.data.value.content);
+  const [content, setContent] = useState(focusBlock?.data.value.content || '');
 
   const isTable = focusBlock?.type === BasicType.TABLE;
 
+  // Sync content when focusBlock changes or drawer opens
   useEffect(() => {
-    setContent(focusBlock?.data.value.content);
-  }, [focusBlock?.data.value.content]);
+    if (visible) {
+      setContent(focusBlock?.data.value.content || '');
+    }
+  }, [visible, focusBlock?.data.value.content]);
 
   const onClose = () => {
     setVisible(false);
@@ -56,13 +59,16 @@ export const HtmlEditor: React.FC<{
   return (
     <Drawer
       placement='left'
-      headerStyle={{ display: 'block', lineHeight: '48px' }}
+      headerStyle={{ display: 'block', lineHeight: '48px', padding: '0 16px', borderBottom: '1px solid #e5e6eb' }}
       title={(
         <Stack distribution='equalSpacing'>
           <TextStyle variation='strong' size='large'>
             {t('Html')}
           </TextStyle>
-          <Stack>
+          <Stack spacing='tight'>
+            <Button onClick={onClose}>
+              {t('Back')}
+            </Button>
             <Button type='primary' onClick={onSave}>
               {t('Save')}
             </Button>
@@ -76,37 +82,44 @@ export const HtmlEditor: React.FC<{
       footer={null}
       bodyStyle={{ padding: 0, overflow: 'hidden' }}
     >
-      <div style={{ display: 'flex', height: '100%' }}>
-        <div style={{ flex: 1, height: '100%' }}>
-          <Suspense
-            fallback={(
-              <div
-                style={{
-                  height: '100%',
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  backgroundColor: '#263238',
-                  justifyContent: 'center',
-                  fontSize: 24,
-                  color: '#fff',
-                }}
-              >
-                {t('Editor Loading...')}
-              </div>
-            )}
-          >
-            <CodeMirrorEditor value={content} onChange={setContent} />
-          </Suspense>
+      <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+        <div style={{ width: '50%', height: '100%', minWidth: 0, overflow: 'hidden' }}>
+          {visible && (
+            <Suspense
+              fallback={(
+                <div
+                  style={{
+                    height: '100%',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    backgroundColor: '#263238',
+                    justifyContent: 'center',
+                    fontSize: 24,
+                    color: '#fff',
+                  }}
+                >
+                  {t('Editor Loading...')}
+                </div>
+              )}
+            >
+              <CodeMirrorEditor value={content} onChange={setContent} />
+            </Suspense>
+          )}
         </div>
         <div
-          style={{ flex: 1, height: '100%', overflow: 'auto', marginRight: 10 }}
+          style={{ width: '50%', height: '100%', minWidth: 0, overflow: 'auto', padding: '8px 0' }}
         >
           <ShadowDom
             style={{
-              ...styles,
-              width: pageData.attributes.width || '600px',
-              margin: 'auto',
+              color: styles.color,
+              fontSize: styles.fontSize,
+              fontFamily: styles.fontFamily,
+              fontWeight: styles.fontWeight,
+              backgroundColor: styles.backgroundColor,
+              padding: styles.padding,
+              width: 'auto',
+              margin: '0 20px',
             }}
           >
             {isTable ? (
