@@ -1,6 +1,8 @@
 # Email Builder
 
-A React-based drag-and-drop email editor that outputs production-ready MJML/HTML. Compatible with **React 18 + 19**.
+Drag-and-drop email editor for React 18 + 19. Outputs production-ready MJML/HTML.
+
+Forked from [zalify/easy-email-editor](https://github.com/zalify/easy-email-editor) (MIT).
 
 ## Packages
 
@@ -10,15 +12,13 @@ A React-based drag-and-drop email editor that outputs production-ready MJML/HTML
 | `easy-email-editor` | Drag-and-drop visual editor with live preview |
 | `easy-email-extensions` | Attribute panels, block toolbars, rich text editor |
 
-## React 19 Compatibility
+## React 19 Fixes (source-level)
 
-Includes full React 19 support:
-
-- Polyfills for removed `ReactDOM.render` and `findDOMNode` APIs (used by Arco Design)
-- Fixed `<html>/<head>/<body>` nesting (React 19 strict validation)
-- Table whitespace text node filtering
-- Pre-build Arco Design patches for `useMergeValue` and `Trigger/portal`
-- Updated peer dependencies to `^18.2.0 || ^19.0.0`
+- HTML renderer remaps `<html>/<head>/<body>` to `<div>` (React 19 strict validation)
+- Table whitespace text node filtering (React 19 parser strictness)
+- `pnpm patch` for `@arco-design/web-react@2.66.11` — fixes `useMergeValue`, `Trigger/portal`, `callbackOriginRef`, `popupChildren.ref`
+- Minimal `findDOMNode` no-op fallback for bundled `react-transition-group`
+- Peer dependencies: `"react": "^18.2.0 || ^19.0.0"`
 
 ## Build
 
@@ -27,21 +27,13 @@ pnpm install
 pnpm run build
 ```
 
-This builds all three packages in order: core → editor → extensions.
-
-The extensions package runs `patch-arco` automatically before building to apply React 19 fixes to Arco Design internals.
-
-## Usage in a Project
-
-Build, then pack tarballs:
+## Install in your project
 
 ```bash
-cd packages/easy-email-core && pnpm pack
-cd packages/easy-email-editor && pnpm pack
-cd packages/easy-email-extensions && pnpm pack
+cd packages/easy-email-core && pnpm pack --pack-destination /path/to/your-project/.easy-email-packs/
+cd packages/easy-email-editor && pnpm pack --pack-destination /path/to/your-project/.easy-email-packs/
+cd packages/easy-email-extensions && pnpm pack --pack-destination /path/to/your-project/.easy-email-packs/
 ```
-
-Install in your project:
 
 ```json
 {
