@@ -1,8 +1,20 @@
 diff --git a/es/Trigger/index.js b/es/Trigger/index.js
-index dfe146d2d1d96be89fc9b90f098dfc6ad6e23d71..e150254b19d0f3d090a060cb9e7fa652b21804fa 100644
+index dfe146d2d1d96be89fc9b90f098dfc6ad6e23d71..a3b2c9f8e1d2a4b5c6d7e8f9a0b1c2d3e4f5a6b7 100644
 --- a/es/Trigger/index.js
 +++ b/es/Trigger/index.js
-@@ -918,7 +918,7 @@ var Trigger = /** @class */ (function (_super) {
+@@ -331,7 +331,10 @@ var Trigger = /** @class */ (function (_super) {
+             var mountContainer = _this.popupContainer;
+             var content = _this.triggerRef.current;
+             var child = _this.getRootElement();
+-            // offsetParent=null when display:none or position: fixed
++            // React 19: getRootElement may return null when findDOMNode is unavailable
++            if (!child) {
++                return _this.state.popupStyle;
++            }
+             if (!child.offsetParent && !child.getClientRects().length) {
+                 return _this.state.popupStyle;
+             }
+@@ -918,7 +921,7 @@ var Trigger = /** @class */ (function (_super) {
                  React.createElement("span", __assign({ ref: this.triggerRef, "trigger-placement": this.realPosition, style: __assign(__assign(__assign({ width: autoAlignPopupWidth && (style === null || style === void 0 ? void 0 : style.width) === undefined
                              ? (_d = this.childrenDomSize) === null || _d === void 0 ? void 0 : _d.width
                              : '' }, popupStyle), { position: 'absolute', zIndex: zIndex || '' }), style) }, popupEventProps, { className: popupClassName }, pickDataAttributes(this.props)),

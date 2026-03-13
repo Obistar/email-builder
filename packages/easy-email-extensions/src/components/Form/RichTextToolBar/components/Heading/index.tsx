@@ -3,13 +3,15 @@ import React from 'react';
 import { ToolItem } from '../ToolItem';
 import { IconFont } from 'easy-email-editor';
 
-const list = [
-  { value: 'P', label: t('Paragraph') },
-  { value: 'H1', label: 'H1' },
-  { value: 'H2', label: 'H2' },
-  { value: 'H3', label: 'H3' },
-  { value: 'H4', label: 'H4' },
-];
+function getList() {
+  return [
+    { value: 'P', label: t('Paragraph') },
+    { value: 'H1', label: 'H1' },
+    { value: 'H2', label: 'H2' },
+    { value: 'H3', label: 'H3' },
+    { value: 'H4', label: 'H4' },
+  ];
+}
 
 export function Heading(props: {
   execCommand: (cmd: string, val?: any) => void;
@@ -30,7 +32,7 @@ export function Heading(props: {
           selectedKeys={[]}
           style={{ width: 130, border: 'none' }}
         >
-          {list.map((item) => (
+          {getList().map((item) => (
             <Menu.Item style={{ lineHeight: '32px', height: 32 }} key={item.value}>
               {item.label}
             </Menu.Item>

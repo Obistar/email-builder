@@ -12137,6 +12137,9 @@ var Trigger = function(_super) {
       var mountContainer = _this.popupContainer;
       var content = _this.triggerRef.current;
       var child = _this.getRootElement();
+      if (!child) {
+        return _this.state.popupStyle;
+      }
       if (!child.offsetParent && !child.getClientRects().length) {
         return _this.state.popupStyle;
       }
@@ -42605,13 +42608,15 @@ function Bold(props) {
     onClick
   }));
 }
-const list$9 = [
-  { value: "P", label: t("Paragraph") },
-  { value: "H1", label: "H1" },
-  { value: "H2", label: "H2" },
-  { value: "H3", label: "H3" },
-  { value: "H4", label: "H4" }
-];
+function getList() {
+  return [
+    { value: "P", label: t("Paragraph") },
+    { value: "H1", label: "H1" },
+    { value: "H2", label: "H2" },
+    { value: "H3", label: "H3" },
+    { value: "H4", label: "H4" }
+  ];
+}
 function Heading(props) {
   return /* @__PURE__ */ React__default.createElement(Popover$1, {
     trigger: "click",
@@ -42625,7 +42630,7 @@ function Heading(props) {
       },
       selectedKeys: [],
       style: { width: 130, border: "none" }
-    }, list$9.map((item2) => /* @__PURE__ */ React__default.createElement(Menu$1.Item, {
+    }, getList().map((item2) => /* @__PURE__ */ React__default.createElement(Menu$1.Item, {
       style: { lineHeight: "32px", height: 32 },
       key: item2.value
     }, item2.label)))

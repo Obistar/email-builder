@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@arco-design/web-react':
-    hash: 2c6ee713996b95ebccd206e772644dd8e927230f693c95928e47b41815059666
+    hash: d7926fa807bbb50ac842238f5284c5f7c34f92959c0b12b9dc417c4b6f74560d
     path: patches/@arco-design__web-react.patch
 
 importers:
@@ -15,7 +15,7 @@ importers:
     dependencies:
       '@arco-design/web-react':
         specifier: ^2.36.1
-        version: 2.66.11(patch_hash=2c6ee713996b95ebccd206e772644dd8e927230f693c95928e47b41815059666)(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 2.66.11(patch_hash=d7926fa807bbb50ac842238f5284c5f7c34f92959c0b12b9dc417c4b6f74560d)(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@codemirror/lang-html':
         specifier: ^6.4.11
         version: 6.4.11
@@ -5994,7 +5994,7 @@ snapshots:
     dependencies:
       color: 3.2.1
 
-  '@arco-design/web-react@2.66.11(patch_hash=2c6ee713996b95ebccd206e772644dd8e927230f693c95928e47b41815059666)(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@arco-design/web-react@2.66.11(patch_hash=d7926fa807bbb50ac842238f5284c5f7c34f92959c0b12b9dc417c4b6f74560d)(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@arco-design/color': 0.4.0
       '@babel/runtime': 7.28.6
