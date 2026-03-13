@@ -4,7 +4,7 @@ dist
 *.local
 .history
 yarn-error.log
-lib
+# lib — kept in git so consumers can install directly from GitHub
 
 coverage
 stats.html

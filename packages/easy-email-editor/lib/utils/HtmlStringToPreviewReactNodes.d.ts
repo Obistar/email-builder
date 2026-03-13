@@ -1,0 +1,6 @@
+import React from 'react';
+export declare function getChildSelector(selector: string, index: number): string;
+export declare function HtmlStringToPreviewReactNodes(content: string): React.DetailedReactHTMLElement<{
+    'data-selector': string;
+    style: any;
+}, HTMLElement>;
