@@ -26,10 +26,32 @@ export interface ImageUploaderProps {
   autoCompleteOptions?: Array<{ value: string; label: React.ReactNode; }>;
 }
 
+// Resolve {{tag}} in a value using the flat merge tags map
+function resolveMergeTagValue(value: string, mergeTags: Record<string, any> | undefined): string {
+  if (!value || !mergeTags || !value.includes('{{')) return value;
+  // Flatten nested mergeTags { Group: { tag: "sample" } } into { tag: "sample" }
+  const flat: Record<string, string> = {};
+  const flatten = (obj: Record<string, any>) => {
+    for (const key of Object.keys(obj)) {
+      const val = obj[key];
+      if (typeof val === 'string') flat[key] = val;
+      else if (val && typeof val === 'object') flatten(val);
+    }
+  };
+  flatten(mergeTags);
+  return value.replace(/\{\{(\w+)\}\}/g, (_m, tag) => flat[tag] ?? `{{${tag}}}`);
+}
+
 export function ImageUploader(props: ImageUploaderProps) {
   const { mergeTags } = useEditorProps();
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState(false);
+
+  // Resolve merge tags for display (e.g., {{logoUrl}} → actual URL)
+  const resolvedValue = useMemo(
+    () => resolveMergeTagValue(props.value, mergeTags),
+    [props.value, mergeTags]
+  );
   const uploadHandlerRef = useRef<UploaderServer | null | undefined>(
     props.uploadHandler
   );
@@ -119,7 +141,7 @@ export function ImageUploader(props: ImageUploaderProps) {
     return (
       <div className={styles['item']}>
         <div className={classnames(styles['info'])}>
-          <img src={props.value} />
+          <img src={resolvedValue} />
           <div className={styles['btn-wrap']}>
             <a title={t('Preview')} onClick={() => setPreview(true)}>
               <IconEye />
@@ -185,7 +207,7 @@ export function ImageUploader(props: ImageUploaderProps) {
         </Grid.Row>
       </div>
       <Modal visible={preview} footer={null} onCancel={() => setPreview(false)}>
-        <img alt={t('Preview')} style={{ width: '100%' }} src={props.value} />
+        <img alt={t('Preview')} style={{ width: '100%' }} src={resolvedValue} />
       </Modal>
     </div>
   );

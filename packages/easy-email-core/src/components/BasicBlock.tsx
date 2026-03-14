@@ -36,6 +36,30 @@ export function BasicBlock(props: {
       /{{([\s\S]+?)}}/g.test(url) ||
       /\*\|([^\|\*]+)\|\*/g.test(url)
     ) {
+      // Try resolving merge tags from dataSource before falling back to placeholder
+      let resolvedUrl = url;
+      const ds = params.dataSource;
+      if (ds && url) {
+        resolvedUrl = url.replace(/\{\{([\s\S]+?)\}\}/g, (_m: string, tag: string) => {
+          const trimmed = tag.trim();
+          return ds[trimmed] != null ? String(ds[trimmed]) : `{{${trimmed}}}`;
+        });
+        resolvedUrl = resolvedUrl.replace(/\*\|([^\|\*]+)\|\*/g, (_m: string, tag: string) => {
+          return ds[tag] != null ? String(ds[tag]) : `*|${tag}|*`;
+        });
+      }
+
+      // If resolved to a real URL, use it; otherwise fall back to placeholder
+      if (resolvedUrl && resolvedUrl !== url && !resolvedUrl.includes('{{') && !resolvedUrl.includes('*|')) {
+        const adapterData = omit(params, 'data.attributes.src');
+        return (
+          <>
+            {`<${tag} ${getAdapterAttributesString(adapterData)} src="${resolvedUrl}">`}
+            {`</${tag}>`}
+          </>
+        );
+      }
+
       const adapterData = omit(params, 'data.attributes.src');
 
       return (

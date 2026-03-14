@@ -5966,11 +5966,6 @@ const PropsProvider = (props) => {
     value: formatProps
   }, props.children);
 };
-function useRefState(state) {
-  const ref = useRef(state);
-  ref.current = state;
-  return ref;
-}
 const MAX_RECORD_SIZE = 50;
 const RecordContext = React.createContext({
   records: [],
@@ -5985,55 +5980,72 @@ const RecordContext = React.createContext({
 });
 const RecordProvider = (props) => {
   const formState = useFormState();
-  const [data, setData] = useState([]);
-  const [index2, setIndex] = useState(-1);
-  const indexRef = useRefState(index2);
+  const [history, setHistory] = useState({ records: [], index: -1 });
+  const historyRef = useRef(history);
+  historyRef.current = history;
   const statusRef = useRef(void 0);
-  const currentData = useRef();
-  if (index2 >= 0 && data.length > 0) {
-    currentData.current = data[index2];
-  }
+  const mountTimeRef = useRef(Date.now());
+  const SETTLE_MS = 2e3;
   const form = useForm();
+  const undo = useCallback(() => {
+    const { records, index: index2 } = historyRef.current;
+    const prevIndex = Math.max(0, index2 - 1);
+    if (prevIndex === index2)
+      return;
+    statusRef.current = "undo";
+    setHistory({ records, index: prevIndex });
+    form.reset(records[prevIndex]);
+  }, [form]);
+  const redo = useCallback(() => {
+    const { records, index: index2 } = historyRef.current;
+    const nextIndex = Math.min(MAX_RECORD_SIZE - 1, index2 + 1, records.length - 1);
+    if (nextIndex === index2)
+      return;
+    statusRef.current = "redo";
+    setHistory({ records, index: nextIndex });
+    form.reset(records[nextIndex]);
+  }, [form]);
+  const reset = useCallback(() => {
+    form.reset();
+  }, [form]);
   const value = useMemo(() => {
     return {
-      records: data,
-      redo: () => {
-        const nextIndex = Math.min(MAX_RECORD_SIZE - 1, index2 + 1, data.length - 1);
-        statusRef.current = "redo";
-        setIndex(nextIndex);
-        form.reset(data[nextIndex]);
-      },
-      undo: () => {
-        const prevIndex = Math.max(0, index2 - 1);
-        statusRef.current = "undo";
-        setIndex(prevIndex);
-        form.reset(data[prevIndex]);
-      },
-      reset: () => {
-        form.reset();
-      },
-      undoable: index2 > 0,
-      redoable: index2 < data.length - 1
+      records: history.records,
+      redo,
+      undo,
+      reset,
+      undoable: history.index > 0,
+      redoable: history.index < history.records.length - 1
     };
-  }, [data, form, index2]);
+  }, [history, redo, undo, reset]);
   useEffect(() => {
     if (statusRef.current === "redo" || statusRef.current === "undo") {
       statusRef.current = void 0;
       return;
     }
-    const currentItem = currentData.current;
-    const isChanged = !(currentItem && lodash.exports.isEqual(formState.values.content, currentItem.content) && formState.values.subTitle === currentItem.subTitle && formState.values.subTitle === currentItem.subTitle);
-    if (isChanged) {
-      currentData.current = formState.values;
-      statusRef.current = "add";
-      setData((oldData) => {
-        const list = oldData.slice(0, indexRef.current + 1);
-        const newData = [...list, lodash.exports.cloneDeep(formState.values)].slice(-MAX_RECORD_SIZE);
-        return newData;
-      });
-      setIndex(Math.min(indexRef.current + 1, MAX_RECORD_SIZE - 1));
-    }
-  }, [formState, indexRef]);
+    const vals = formState.values;
+    const isSettling = Date.now() - mountTimeRef.current < SETTLE_MS;
+    statusRef.current = "add";
+    setHistory((prev) => {
+      if (isSettling) {
+        const bl = prev.records[0];
+        if (bl && lodash.exports.isEqual(vals.content, bl.content) && vals.subTitle === bl.subTitle) {
+          return prev;
+        }
+        return { records: [lodash.exports.cloneDeep(vals)], index: 0 };
+      }
+      const list = prev.records.slice(0, prev.index + 1);
+      const last = list[list.length - 1];
+      if (last && lodash.exports.isEqual(vals.content, last.content) && vals.subTitle === last.subTitle) {
+        return prev;
+      }
+      const newRecords = [...list, lodash.exports.cloneDeep(vals)].slice(-MAX_RECORD_SIZE);
+      return {
+        records: newRecords,
+        index: Math.min(prev.index + 1, MAX_RECORD_SIZE - 1)
+      };
+    });
+  }, [formState]);
   return /* @__PURE__ */ React.createElement(RecordContext.Provider, {
     value
   }, props.children);
@@ -6253,6 +6265,11 @@ function useEditorContext() {
     setInitialized,
     pageData: content
   };
+}
+function useRefState(state) {
+  const ref = useRef(state);
+  ref.current = state;
+  return ref;
 }
 const FocusBlockLayoutContext = React.createContext({
   focusBlockNode: null
@@ -7087,42 +7104,29 @@ function IconFont(props) {
     className: classnames("iconfont", props.iconName)
   });
 }
-var index$2 = "";
-const Button = (props) => {
-  return /* @__PURE__ */ React.createElement("button", {
-    onClick: props.onClick,
-    className: classnames(
-      "easy-email-editor-button",
-      props.noBorder && "easy-email-editor-noBorder"
-    ),
-    title: props.title,
-    disabled: props.disabled,
-    type: "button"
-  }, /* @__PURE__ */ React.createElement(React.Fragment, null, props.children));
-};
 function ToolsPanel() {
   const { redo, undo, redoable, undoable } = useBlock();
-  return /* @__PURE__ */ React.createElement(Stack, null, /* @__PURE__ */ React.createElement(Button, {
+  return /* @__PURE__ */ React.createElement(Stack, {
+    alignment: "center"
+  }, /* @__PURE__ */ React.createElement("button", {
+    className: "easy-email-editor-toolBtn",
     title: t("undo"),
     disabled: !undoable,
-    onClick: undo
+    onClick: undo,
+    type: "button"
   }, /* @__PURE__ */ React.createElement(IconFont, {
     iconName: "icon-undo",
-    style: {
-      cursor: "inherit",
-      opacity: undoable ? 1 : 0.75
-    }
-  })), /* @__PURE__ */ React.createElement(Button, {
+    style: { cursor: "inherit" }
+  })), /* @__PURE__ */ React.createElement("button", {
+    className: "easy-email-editor-toolBtn",
     title: t("redo"),
     disabled: !redoable,
-    onClick: redo
+    onClick: redo,
+    type: "button"
   }, /* @__PURE__ */ React.createElement(IconFont, {
     iconName: "icon-redo",
-    style: {
-      cursor: "inherit",
-      opacity: redoable ? 1 : 0.75
-    }
-  })), /* @__PURE__ */ React.createElement(Stack.Item, null));
+    style: { cursor: "inherit" }
+  })));
 }
 function useActiveTab() {
   const { activeTab, setActiveTab } = useContext(BlocksContext);
@@ -7661,6 +7665,31 @@ function makeStandardContentEditable(node, blockType, idx) {
     });
   }
 }
+function flattenMergeTags(obj, result = {}) {
+  for (const key of Object.keys(obj)) {
+    const val = obj[key];
+    if (typeof val === "string") {
+      result[key] = val;
+    } else if (val && typeof val === "object") {
+      flattenMergeTags(val, result);
+    }
+  }
+  return result;
+}
+function resolveMergeTagsInAttributes(html, flatTags) {
+  if (!html || Object.keys(flatTags).length === 0)
+    return html;
+  return html.replace(
+    /(\s(?:src|href|background|action|poster|data-src)=")([^"]*?)(")/g,
+    (_full, pre, value, post) => {
+      const resolved = value.replace(/\{\{([\w]+)\}\}/g, (_m, tag) => {
+        var _a;
+        return (_a = flatTags[tag]) != null ? _a : `{{${tag}}}`;
+      });
+      return pre + resolved + post;
+    }
+  );
+}
 let count = 0;
 function MjmlDomRender() {
   var _a;
@@ -7671,7 +7700,14 @@ function MjmlDomRender() {
   const [isTextFocus, setIsTextFocus] = useState(false);
   const isTextFocusing = document.activeElement === getEditorRoot() && ((_a = getShadowRoot().activeElement) == null ? void 0 : _a.getAttribute("contenteditable")) === "true";
   useEffect(() => {
-    if (!isTextFocus && !lodash.exports.isEqual(content, pageData)) {
+    if (lodash.exports.isEqual(content, pageData))
+      return;
+    if (isTextFocus) {
+      const stripContent = (page) => page ? JSON.stringify(page, (key, val) => key === "content" ? void 0 : val) : null;
+      if (stripContent(content) !== stripContent(pageData)) {
+        setPageData(lodash.exports.cloneDeep(content));
+      }
+    } else {
       setPageData(lodash.exports.cloneDeep(content));
     }
   }, [content, pageData, setPageData, isTextFocus]);
@@ -7711,10 +7747,14 @@ function MjmlDomRender() {
       root.removeEventListener("click", onClick);
     };
   }, []);
+  const flatTags = useMemo(
+    () => mergeTags ? flattenMergeTags(mergeTags) : {},
+    [mergeTags]
+  );
   const html = useMemo(() => {
     if (!pageData)
       return "";
-    const renderHtml = mjml(
+    let renderHtml = mjml(
       JsonToMjml({
         data: pageData,
         idx: getPageIdx(),
@@ -7723,8 +7763,9 @@ function MjmlDomRender() {
         dataSource: lodash.exports.cloneDeep(mergeTags)
       })
     ).html;
+    renderHtml = resolveMergeTagsInAttributes(renderHtml, flatTags);
     return renderHtml;
-  }, [mergeTags, pageData]);
+  }, [mergeTags, flatTags, pageData]);
   return useMemo(() => {
     return /* @__PURE__ */ React.createElement("div", __spreadProps(__spreadValues({}, {
       [DATA_RENDER_COUNT]: count++
@@ -8431,6 +8472,19 @@ function EditEmailPreview() {
     [activeTab]
   );
 }
+var index$2 = "";
+const Button = (props) => {
+  return /* @__PURE__ */ React.createElement("button", {
+    onClick: props.onClick,
+    className: classnames(
+      "easy-email-editor-button",
+      props.noBorder && "easy-email-editor-noBorder"
+    ),
+    title: props.title,
+    disabled: props.disabled,
+    type: "button"
+  }, /* @__PURE__ */ React.createElement(React.Fragment, null, props.children));
+};
 var index$1 = "";
 const Tabs = (props) => {
   const [activeTab, setActiveTab] = useState(props.defaultActiveTab || "");
@@ -8535,25 +8589,79 @@ const EmailEditor = () => {
       style: { height: "calc(100% - 50px)" },
       tab: /* @__PURE__ */ React.createElement(Stack, {
         spacing: "tight"
-      }, /* @__PURE__ */ React.createElement(IconFont, {
-        iconName: "icon-editor"
-      })),
+      }, /* @__PURE__ */ React.createElement("svg", {
+        viewBox: "0 0 24 24",
+        width: "1em",
+        height: "1em",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        strokeLinecap: "round",
+        strokeLinejoin: "round"
+      }, /* @__PURE__ */ React.createElement("path", {
+        d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+      }), /* @__PURE__ */ React.createElement("path", {
+        d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+      }))),
       key: ActiveTabKeys.EDIT
     }, /* @__PURE__ */ React.createElement(EditEmailPreview, null)), /* @__PURE__ */ React.createElement(TabPane, {
       style: { height: "calc(100% - 50px)" },
       tab: /* @__PURE__ */ React.createElement(Stack, {
         spacing: "tight"
-      }, /* @__PURE__ */ React.createElement(IconFont, {
-        iconName: "icon-desktop"
-      })),
+      }, /* @__PURE__ */ React.createElement("svg", {
+        viewBox: "0 0 24 24",
+        width: "1em",
+        height: "1em",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        strokeLinecap: "round",
+        strokeLinejoin: "round"
+      }, /* @__PURE__ */ React.createElement("rect", {
+        x: "2",
+        y: "3",
+        width: "20",
+        height: "14",
+        rx: "2",
+        ry: "2"
+      }), /* @__PURE__ */ React.createElement("line", {
+        x1: "8",
+        y1: "21",
+        x2: "16",
+        y2: "21"
+      }), /* @__PURE__ */ React.createElement("line", {
+        x1: "12",
+        y1: "17",
+        x2: "12",
+        y2: "21"
+      }))),
       key: ActiveTabKeys.PC
     }, /* @__PURE__ */ React.createElement(DesktopEmailPreview, null)), /* @__PURE__ */ React.createElement(TabPane, {
       style: { height: "calc(100% - 50px)" },
       tab: /* @__PURE__ */ React.createElement(Stack, {
         spacing: "tight"
-      }, /* @__PURE__ */ React.createElement(IconFont, {
-        iconName: "icon-mobile"
-      })),
+      }, /* @__PURE__ */ React.createElement("svg", {
+        viewBox: "0 0 24 24",
+        width: "1em",
+        height: "1em",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        strokeLinecap: "round",
+        strokeLinejoin: "round"
+      }, /* @__PURE__ */ React.createElement("rect", {
+        x: "5",
+        y: "2",
+        width: "14",
+        height: "20",
+        rx: "2",
+        ry: "2"
+      }), /* @__PURE__ */ React.createElement("line", {
+        x1: "12",
+        y1: "18",
+        x2: "12.01",
+        y2: "18"
+      }))),
       key: ActiveTabKeys.MOBILE
     }, /* @__PURE__ */ React.createElement(MobileEmailPreview, null))), /* @__PURE__ */ React.createElement(React.Fragment, null, fixedContainer)),
     [activeTab, containerHeight, fixedContainer, onBeforeChangeTab, onChangeTab]

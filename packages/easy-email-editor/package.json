@@ -2,13 +2,16 @@
   "name": "easy-email-editor",
   "license": "MIT",
   "description": "Email builder editor — drag-and-drop visual editor with live preview",
-  "version": "4.17.0",
+  "version": "4.17.9",
   "repository": {
     "type": "git",
     "url": "https://github.com/AyoubIghworworben/email-builder.git"
   },
   "keywords": [
-    "email", "editor", "drag-drop", "react"
+    "email",
+    "editor",
+    "drag-drop",
+    "react"
   ],
   "files": [
     "lib"

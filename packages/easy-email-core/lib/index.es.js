@@ -4495,6 +4495,21 @@ function BasicBlock(props) {
   if (mode === "testing" && tag === "mj-image") {
     let url = data.attributes.src;
     if (url === "" || /{{([\s\S]+?)}}/g.test(url) || /\*\|([^\|\*]+)\|\*/g.test(url)) {
+      let resolvedUrl = url;
+      const ds = params.dataSource;
+      if (ds && url) {
+        resolvedUrl = url.replace(/\{\{([\s\S]+?)\}\}/g, (_m, tag2) => {
+          const trimmed = tag2.trim();
+          return ds[trimmed] != null ? String(ds[trimmed]) : `{{${trimmed}}}`;
+        });
+        resolvedUrl = resolvedUrl.replace(/\*\|([^\|\*]+)\|\*/g, (_m, tag2) => {
+          return ds[tag2] != null ? String(ds[tag2]) : `*|${tag2}|*`;
+        });
+      }
+      if (resolvedUrl && resolvedUrl !== url && !resolvedUrl.includes("{{") && !resolvedUrl.includes("*|")) {
+        const adapterData2 = omit(params, "data.attributes.src");
+        return /* @__PURE__ */ React.createElement(React.Fragment, null, `<${tag} ${getAdapterAttributesString(adapterData2)} src="${resolvedUrl}">`, `</${tag}>`);
+      }
       const adapterData = omit(params, "data.attributes.src");
       return /* @__PURE__ */ React.createElement(React.Fragment, null, `<${tag} ${getAdapterAttributesString(adapterData)} src="${getImg(
         "IMAGE_59"

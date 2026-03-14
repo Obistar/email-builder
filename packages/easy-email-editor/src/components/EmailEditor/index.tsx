@@ -57,7 +57,7 @@ export const EmailEditor = () => {
             style={{ height: 'calc(100% - 50px)' }}
             tab={(
               <Stack spacing='tight'>
-                <IconFont iconName='icon-editor' />
+                <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </Stack>
             )}
             key={ActiveTabKeys.EDIT}
@@ -68,7 +68,7 @@ export const EmailEditor = () => {
             style={{ height: 'calc(100% - 50px)' }}
             tab={(
               <Stack spacing='tight'>
-                <IconFont iconName='icon-desktop' />
+                <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
               </Stack>
             )}
             key={ActiveTabKeys.PC}
@@ -79,7 +79,7 @@ export const EmailEditor = () => {
             style={{ height: 'calc(100% - 50px)' }}
             tab={(
               <Stack spacing='tight'>
-                <IconFont iconName='icon-mobile' />
+                <svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
               </Stack>
             )}
             key={ActiveTabKeys.MOBILE}

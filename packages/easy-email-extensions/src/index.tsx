@@ -1,9 +1,13 @@
-// React 19 removed findDOMNode — provide a no-op fallback for bundled
-// react-transition-group (used internally by Arco Design) when nodeRef
-// isn't available. Arco's own findDOMNode wrapper already has guards.
+// React 19 removed ReactDOM.findDOMNode. Provide a smarter polyfill that
+// handles the cases Arco's internals and react-transition-group rely on.
 import ReactDOM from 'react-dom';
 if (!(ReactDOM as any).findDOMNode) {
-  (ReactDOM as any).findDOMNode = () => null;
+  (ReactDOM as any).findDOMNode = function findDOMNodePolyfill(instance: any) {
+    if (instance instanceof Element) return instance;
+    if (instance && instance.current instanceof Element) return instance.current;
+    if (instance && typeof instance.getRootDOMNode === 'function') return instance.getRootDOMNode();
+    return null;
+  };
 }
 
 import './index.scss';

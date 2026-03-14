@@ -9,6 +9,33 @@ import { useEditorProps } from '@/hooks/useEditorProps';
 import { getEditorRoot, getShadowRoot } from '@/utils';
 import { DATA_RENDER_COUNT, FIXED_CONTAINER_ID } from '@/constants';
 
+// Flatten nested mergeTags { Group: { tag: "value" } } into { tag: "value" }
+function flattenMergeTags(obj: Record<string, any>, result: Record<string, string> = {}): Record<string, string> {
+  for (const key of Object.keys(obj)) {
+    const val = obj[key];
+    if (typeof val === 'string') {
+      result[key] = val;
+    } else if (val && typeof val === 'object') {
+      flattenMergeTags(val, result);
+    }
+  }
+  return result;
+}
+
+// Replace {{tag}} inside HTML attribute values (src="{{logoUrl}}", href="{{url}}", etc.)
+// Only targets merge tags within quoted attribute values, preserving text content tags for MergeTagBadge
+function resolveMergeTagsInAttributes(html: string, flatTags: Record<string, string>): string {
+  if (!html || Object.keys(flatTags).length === 0) return html;
+  // Match attribute="value" pairs and replace {{tag}} only within the value portion
+  return html.replace(
+    /(\s(?:src|href|background|action|poster|data-src)=")([^"]*?)(")/g,
+    (_full, pre, value, post) => {
+      const resolved = value.replace(/\{\{([\w]+)\}\}/g, (_m: string, tag: string) => flatTags[tag] ?? `{{${tag}}}`);
+      return pre + resolved + post;
+    },
+  );
+}
+
 let count = 0;
 export function MjmlDomRender() {
   const { pageData: content } = useEditorContext();
@@ -22,7 +49,17 @@ export function MjmlDomRender() {
     getShadowRoot().activeElement?.getAttribute('contenteditable') === 'true';
 
   useEffect(() => {
-    if (!isTextFocus && !isEqual(content, pageData)) {
+    if (isEqual(content, pageData)) return;
+
+    if (isTextFocus) {
+      // Allow attribute/style changes through, but skip content-only changes
+      // to preserve cursor position during typing.
+      const stripContent = (page: IPage | null) =>
+        page ? JSON.stringify(page, (key, val) => key === 'content' ? undefined : val) : null;
+      if (stripContent(content) !== stripContent(pageData)) {
+        setPageData(cloneDeep(content));
+      }
+    } else {
       setPageData(cloneDeep(content));
     }
   }, [content, pageData, setPageData, isTextFocus]);
@@ -66,10 +103,16 @@ export function MjmlDomRender() {
     };
   }, []);
 
+  // Flatten nested mergeTags for attribute replacement
+  const flatTags = useMemo(
+    () => (mergeTags ? flattenMergeTags(mergeTags) : {}),
+    [mergeTags],
+  );
+
   const html = useMemo(() => {
     if (!pageData) return '';
 
-    const renderHtml = mjml(
+    let renderHtml = mjml(
       JsonToMjml({
         data: pageData,
         idx: getPageIdx(),
@@ -78,8 +121,10 @@ export function MjmlDomRender() {
         dataSource: cloneDeep(mergeTags),
       }),
     ).html;
+    // Resolve {{tag}} in attribute values (img src, a href, etc.) so images/links preview correctly
+    renderHtml = resolveMergeTagsInAttributes(renderHtml, flatTags);
     return renderHtml;
-  }, [mergeTags, pageData]);
+  }, [mergeTags, flatTags, pageData]);
 
   return useMemo(() => {
     return (
